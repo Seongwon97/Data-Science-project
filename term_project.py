@@ -190,7 +190,7 @@ NB_pred=classifier_NB.predict(X_test)
 
 # calc value
 NB_acc=float(accuracy_score(y_test, NB_pred).round(3))
-
+NB_mse=float(round(metrics.mean_squared_error(y_test,NB_pred),3))
 NB_jc=float(metrics.jaccard_score(y_test, NB_pred,average='weighted').round(3))
 NB_f1s=float(metrics.f1_score(y_test, NB_pred,average='weighted',zero_division=1).round(3))
 
