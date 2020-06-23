@@ -8,7 +8,6 @@ import sklearn.linear_model as lm
 import io
 import pydot
 from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from IPython.display import Image
 from sklearn.model_selection import cross_val_score
 from sklearn import metrics
@@ -17,11 +16,11 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 
 #Read the file
 df = pd.read_csv('loan_final.csv')
-## 100000개만 우선
-df=df.head(100000)
-print("\n----------------------------- [ Initial data ] ------------------------------")
+## 돌아가는데 너무 오래걸려서 50000개만 우선
+df=df.head(50000)
+print("\n--------------------------- [ Initial data ] ----------------------------")
 print(df)
-print("-----------------------------------------------------------------------------\n")
+print("-------------------------------------------------------------------------\n")
 
 #Dirty data count output
 print("In Initial data, total dirty data count = ",sum(df.isna().sum()))
@@ -89,8 +88,8 @@ df3.drop(['home_ownership', 'income_category', 'annual_inc', 'loan_amount', \
           'loan_condition', 'total_pymnt', 'installment'],axis=1,inplace=True)
 
 
+# target 제외하고 normalization 했습니다.
 #Data normalization using MinMax scaling
-#Data normalization using MinMax scaling ( target 부분 제외하고 normalization 했습니다)
 X=df3[['term','interest_payments', 'interest_rate']]
 y=df3['grade']
 
@@ -98,9 +97,9 @@ scaler = preprocessing.MinMaxScaler()
 scaled_df = scaler.fit_transform(X)
 scaled_df = pd.DataFrame(scaled_df, columns=['term', 'interest_payments','interest_rate'])
 scaled_df['grade']=df3['grade']
-print("\n============= [ Data Nomalization Results ] =============")
+print("\n=========== [ Data Nomalization Results ] ===========")
 print(scaled_df)
-print('---------------------------------------------------------\n')
+print('-----------------------------------------------------\n')
 
 
 #Visualize Data Normalization with MinMax Scaling
@@ -138,10 +137,10 @@ classifier_KNN.fit(X_train, y_train)
 knn_pred = classifier_KNN.predict(X_test)
 
 # calc value
-knn_acc=accuracy_score(y_test, knn_pred).round(3)
-knn_mse=round(metrics.mean_squared_error(y_test,knn_pred),3)
-knn_jc=metrics.jaccard_score(y_test, knn_pred,average='weighted').round(3)
-knn_f1s=metrics.f1_score(y_test, knn_pred,average='weighted',zero_division=1).round(3)
+knn_acc=float(accuracy_score(y_test, knn_pred).round(3))
+knn_mse=float(round(metrics.mean_squared_error(y_test,knn_pred),3))
+knn_jc=float(metrics.jaccard_score(y_test, knn_pred,average='weighted').round(3))
+knn_f1s=float(metrics.f1_score(y_test, knn_pred,average='weighted',zero_division=1).round(3))
 
 # confusion matrix
 confusion = confusion_matrix(y_test,knn_pred)
@@ -164,10 +163,10 @@ classifier_SVM.fit(X_train, y_train)
 svm_pred=classifier_SVM.predict(X_test)
 
 # calc value
-svm_acc=accuracy_score(y_test, svm_pred).round(3)
-svm_mse=round(metrics.mean_squared_error(y_test,svm_pred),3)
-svm_jc=metrics.jaccard_score(y_test, svm_pred,average='weighted').round(3)
-svm_f1s=metrics.f1_score(y_test, svm_pred,average='weighted',zero_division=1).round(3)
+svm_acc=float(accuracy_score(y_test, svm_pred).round(3))
+svm_mse=float(round(metrics.mean_squared_error(y_test,svm_pred),3))
+svm_jc=float(metrics.jaccard_score(y_test, svm_pred,average='weighted').round(3))
+svm_f1s=float(metrics.f1_score(y_test, svm_pred,average='weighted',zero_division=1).round(3))
 
 # confusion matrix
 confusion = confusion_matrix(y_test,svm_pred)
@@ -190,10 +189,10 @@ classifier_NB.fit(X_train, y_train)
 NB_pred=classifier_NB.predict(X_test)
 
 # calc value
-NB_acc=accuracy_score(y_test, NB_pred).round(3)
-NB_mse=round(metrics.mean_squared_error(y_test,NB_pred),3)
-NB_jc=metrics.jaccard_score(y_test, NB_pred,average='weighted').round(3)
-NB_f1s=metrics.f1_score(y_test, NB_pred,average='weighted',zero_division=1).round(3)
+NB_acc=float(accuracy_score(y_test, NB_pred).round(3))
+
+NB_jc=float(metrics.jaccard_score(y_test, NB_pred,average='weighted').round(3))
+NB_f1s=float(metrics.f1_score(y_test, NB_pred,average='weighted',zero_division=1).round(3))
 
 # confusion matrix
 confusion = confusion_matrix(y_test,NB_pred)
@@ -210,16 +209,29 @@ plt.show()
 ## Decision Tree to the Train set ##
 print('================= [ Decision Tree ] =================\n')
 from sklearn.tree import DecisionTreeClassifier
-classifier_DT = DecisionTreeClassifier(criterion = 'entropy', random_state = 0)
+classifier_DT = DecisionTreeClassifier(max_depth=5,criterion = 'entropy', random_state = 0)
 classifier_DT.fit(X_train, y_train)
+
+'''
+# graph가 안돌아가서 일단 주석 처리했어요.
+# 데이터 양이 많아서 주피터로 시각화 했어요 
+command_buf = io.StringIO()
+target_name = np.array(['A', 'B', 'C', 'D', 'E', 'F', 'G'])
+export_graphviz(model, out_file=command_buf, feature_names=['term', 'interest_payments', 'interest_rate'],
+                class_names=target_name)
+graph = pydot.graph_from_dot_data(command_buf.getvalue())[0]
+
+image = graph.create_png()
+Image(image)
+'''
 
 DT_pred=classifier_DT.predict(X_test)
 
 # calc value
-DT_acc=accuracy_score(y_test, DT_pred).round(3)
-DT_mse=round(metrics.mean_squared_error(y_test,DT_pred),3)
-DT_jc=metrics.jaccard_score(y_test, DT_pred,average='weighted').round(3)
-DT_f1s=metrics.f1_score(y_test, DT_pred,average='weighted',zero_division=1).round(3)
+DT_acc=float(accuracy_score(y_test, DT_pred).round(3))
+DT_mse=float(round(metrics.mean_squared_error(y_test,DT_pred),3))
+DT_jc=float(metrics.jaccard_score(y_test, DT_pred,average='weighted').round(3))
+DT_f1s=float(metrics.f1_score(y_test, DT_pred,average='weighted',zero_division=1).round(3))
 
 # confusion matrix
 confusion = confusion_matrix(y_test,DT_pred)
@@ -242,10 +254,10 @@ classifier_RF.fit(X_train, y_train)
 RF_pred=classifier_RF.predict(X_test)
 
 # calc value
-RF_acc=accuracy_score(y_test, RF_pred).round(3)
-RF_mse=round(metrics.mean_squared_error(y_test,RF_pred),3)
-RF_jc=metrics.jaccard_score(y_test, RF_pred,average='weighted').round(3)
-RF_f1s=metrics.f1_score(y_test, RF_pred,average='weighted',zero_division=1).round(3)
+RF_acc=float(accuracy_score(y_test, RF_pred).round(3))
+RF_mse=float(round(metrics.mean_squared_error(y_test,RF_pred),3))
+RF_jc=float(metrics.jaccard_score(y_test, RF_pred,average='weighted').round(3))
+RF_f1s=float(metrics.f1_score(y_test, RF_pred,average='weighted',zero_division=1).round(3))
 
 # confusion matrix
 confusion = confusion_matrix(y_test,RF_pred)
@@ -266,8 +278,54 @@ data=[['KNN', knn_acc,knn_mse, knn_jc, knn_f1s],
       ['Navie Bayes',NB_acc,NB_mse,NB_jc,NB_f1s],
       ['Decision Tree', DT_acc,DT_mse,DT_jc, DT_f1s], 
       ['Random Forest', RF_acc,RF_mse,RF_jc, RF_f1s]]
-print('=====================================================\n')
 
 result=pd.DataFrame(data,columns=['Algorithm','Accuarcy','MSE','Jaccard','F1-score'])
 print(result)
+print('=====================================================\n')
 
+
+## result visualization
+def compute_pos(xticks, width, i, models):
+    index = np.arange(len(xticks))
+    n = len(models)
+    correction = i-0.5*(n-1)
+    return index + width*correction
+
+def height_(ax, bar):
+    for rect in bar:
+        height = rect.get_height()
+        posx = rect.get_x()+rect.get_width()*0.5
+        posy = height*1.01
+        ax.text(posx, posy, '%.2f' % height, rotation=30, ha='center', va='bottom')
+
+
+models = ['KNN', 'SVM', 'Navie Bayes','Decision Tree','Random Forest']
+xticks = ['Accuracy','Jaccard','F1-score']
+data = {'KNN':[knn_acc, knn_jc, knn_f1s],
+        'SVM':[svm_acc,svm_jc, svm_f1s],
+        'Navie Bayes':[NB_acc,NB_jc,NB_f1s],
+        'Decision Tree':[DT_acc,DT_jc, DT_f1s],
+        'Random Forest':[RF_acc,RF_jc, RF_f1s]}
+
+fig, ax = plt.subplots(figsize=(8,6))
+colors = ['salmon', 'orange', 'cadetblue', 'skyblue','yellow']
+width = 0.15
+    
+for i, model in enumerate(models):
+    pos = compute_pos(xticks, width, i, models)
+    bar = ax.bar(pos, data[model], width=width*0.95, label=model, color=colors[i])
+    height_(ax, bar)
+
+ax.set_xticks(range(len(xticks)))
+ax.set_xticklabels(xticks, fontsize=10)     
+ax.set_xlabel('Value', fontsize=12)
+ax.set_ylim([0,1.1])
+ax.set_ylabel('Prediction Score', fontsize=12)
+    
+ax.legend(loc='lower right', shadow=True, ncol=1)
+ax.set_axisbelow(True)
+ax.yaxis.grid(True, color='gray', linestyle='dashed', linewidth=0.5)
+
+plt.title('[ Predict Score for each classifier ]\n',fontsize=15)
+plt.show()
+    
