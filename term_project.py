@@ -11,11 +11,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from IPython.display import Image
 from sklearn.model_selection import cross_val_score
-from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
+from sklearn.metrics import classification_report
+
 
 #Read the file
 df = pd.read_csv('loan_final.csv')
+## 100개만 우선
+df=df.head(100)
 print("\n----------------------------- [ Initial data ] ------------------------------")
 print(df)
 print("-----------------------------------------------------------------------------\n")
@@ -89,13 +92,11 @@ df3.drop(['home_ownership', 'income_category', 'annual_inc', 'loan_amount', \
 #Data normalization using MinMax scaling
 scaler = preprocessing.MinMaxScaler()
 scaled_df = scaler.fit_transform(df3)
-
 scaled_df = pd.DataFrame(scaled_df, columns=['term', 'interest_payments', 'interest_rate', 'grade'])
-
-
-print("\n----------------------- [ Data Nomalization Results ] -----------------------")
+print("\n=========== [ Data Nomalization Results ] ===========")
 print(scaled_df)
-print("-----------------------------------------------------------------------------\n")
+print('-----------------------------------------------------\n')
+
 
 #Visualize Data Normalization with MinMax Scaling
 ig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(9, 7))
@@ -114,67 +115,96 @@ sns.kdeplot(scaled_df['grade'], ax=ax2)
 plt.show()
 
 
-# data양이 많아 우선 일부분으로 데이터를 분석하였습니다.
-df3=df3.head(100)
-X=df3[['term','interest_payments', 'interest_rate']]
+### Evaluation
+X=df3[['term','interest_payments','interest_rate']]
 y=df3['grade']
-#####
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+target_names=['A','B','C','D','E','F']
+
+# split dataset
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state = 0)
 
 
-# DecisionTreeClassifier
-model = DecisionTreeClassifier(
-    criterion='entropy', max_depth=3, min_samples_leaf=7).fit(X_train, y_train)
-prediction = model.predict(X_test)
-dt_score = float(model.score(X_test, y_test))
-#print('[ Decision Tree Score ] %.3f' %dt_score)
-
-# 데이터 양이 많아서 주피터로 시각화 했어요
-#command_buf = io.StringIO()
-#target_name = np.array(['A', 'B', 'C', 'D', 'E', 'F', 'G'])
-#export_graphviz(model, out_file=command_buf, feature_names=['term', 'interest_payments', 'interest_rate'],
-#               class_names=target_name)
-#graph = pydot.graph_from_dot_data(command_buf.getvalue())[0]
-#image = graph.create_png()
-#Image(image)
-
-
-# KNeighborsClassifier
+# KNN to the Training set
+print('====================== [ KNN ] ======================\n')
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn import metrics
+classifier_KNN = KNeighborsClassifier(n_neighbors = 5, metric = 'minkowski', p = 2)
+classifier_KNN.fit(X_train, y_train)
 
-K = 50
-mean_acc = np.zeros((K-1))
-std_acc = np.zeros((K-1))
-ConfustionMx = [];
-for n in range(1,K):
-    neighbor = KNeighborsClassifier(n_neighbors = n).fit(X_train,y_train)
-    yhat=neighbor.predict(X_test)
-    mean_acc[n-1] = metrics.accuracy_score(y_test, yhat)
-    std_acc[n-1]=np.std(yhat==y_test)/np.sqrt(yhat.shape[0])
-plt.plot(range(1,K),mean_acc,'g')
-plt.fill_between(range(1,K),mean_acc - 1 * std_acc,mean_acc + 1 * std_acc, alpha=0.10)
-plt.legend(('Accuracy ', '+/- 3x_std'))
-plt.ylabel('Accuracy ')
-plt.xlabel('Number of Neigbors (K)')
-maxacc=mean_acc.max()
-#print( "[ KNN Score ] %.3f" %maxacc, "with k=", mean_acc.argmax()+1)
-plt.tight_layout()
-plt.show()
+knn_pred = classifier_KNN.predict(X_test)
+
+knn_mse=metrics.mean_squared_error(y_test,knn_pred)
+knn_jc=metrics.jaccard_score(y_test, knn_pred,average='weighted').round(3)
+knn_f1s=metrics.f1_score(y_test, knn_pred,average='weighted',zero_division=1).round(3)
+print(knn_mse,knn_jc,knn_f1s)
+print(classification_report(y_test, knn_pred, target_names=target_names, digits=3,zero_division=1))
+print('-----------------------------------------------------\n')
+
+# SVM to the Training set
+print('====================== [ SVM ] ======================\n')
+from sklearn.svm import SVC
+classifier_SVM = SVC(kernel = 'rbf', random_state = 0)
+classifier_SVM.fit(X_train, y_train)
+
+svm_pred=classifier_SVM.predict(X_test)
+svm_mse=metrics.mean_squared_error(y_test,svm_pred)
+svm_jc=metrics.jaccard_score(y_test, svm_pred,average='weighted').round(3)
+svm_f1s=metrics.f1_score(y_test, svm_pred,average='weighted',zero_division=1).round(3)
+print(svm_mse,svm_jc,svm_f1s)
+
+print(classification_report(y_test, svm_pred, target_names=target_names, digits=3,zero_division=1))
+print('-----------------------------------------------------\n')
+
+# Naive Bayes to the Training set
+print('================== [ Navie Bayes ] ===================\n')
+from sklearn.naive_bayes import GaussianNB
+classifier_NB = GaussianNB()
+classifier_NB.fit(X_train, y_train)
+
+NB_pred=classifier_NB.predict(X_test)
+NB_mse=metrics.mean_squared_error(y_test,NB_pred)
+NB_jc=metrics.jaccard_score(y_test, NB_pred,average='weighted').round(3)
+NB_f1s=metrics.f1_score(y_test, NB_pred,average='weighted',zero_division=1).round(3)
+print(NB_mse,NB_jc,NB_f1s)
+
+print(classification_report(y_test, NB_pred, target_names=target_names, digits=3,zero_division=1))
+print('-----------------------------------------------------\n')
+
+# Decision Tree Classification to the Training set
+print('================= [ Decision Tree ] =================\n')
+from sklearn.tree import DecisionTreeClassifier
+classifier_DT = DecisionTreeClassifier(criterion = 'entropy', random_state = 0)
+classifier_DT.fit(X_train, y_train)
+
+DT_pred=classifier_DT.predict(X_test)
+DT_mse=metrics.mean_squared_error(y_test,DT_pred)
+DT_jc=metrics.jaccard_score(y_test, DT_pred,average='weighted').round(3)
+DT_f1s=metrics.f1_score(y_test, DT_pred,average='weighted',zero_division=1).round(3)
+print(DT_mse,DT_jc,DT_f1s)
+
+print(classification_report(y_test, DT_pred, target_names=target_names, digits=3,zero_division=1))
+print('-----------------------------------------------------\n')
 
 
-# SVM
-from sklearn import svm
-svm_model = svm.SVC(kernel='rbf').fit(X_train, y_train)
-prediction = svm_model.predict(X_test)
-svm_score = float(svm_model.score(X_test, y_test))
-#print('[ Support Vector Machine Score ] %.3f' %svm_score)
+# Random Forest Classification to the Training set
+print('================= [ Random Forest ] =================\n')
+from sklearn.ensemble import RandomForestClassifier
+classifier_RF = RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 0)
+classifier_RF.fit(X_train, y_train)
 
+RF_pred=classifier_RF.predict(X_test)
+RF_mse=metrics.mean_squared_error(y_test,RF_pred)
+RF_jc=metrics.jaccard_score(y_test, RF_pred,average='weighted').round(3)
+RF_f1s=metrics.f1_score(y_test, RF_pred,average='weighted',zero_division=1).round(3)
 
-# show scores
-data=[['Decision Tree',dt_score],
-      ['KNN',maxacc],
-      ['SVM',svm_score]]
+print(classification_report(y_test, RF_pred, target_names=target_names, digits=3,zero_division=1))
+print('-----------------------------------------------------\n')
 
-result=pd.DataFrame(data,columns=['[ Algorithms ]','[ SCORE ]'])
+data=[['KNN', knn_mse, knn_jc, knn_f1s],
+      ['SVM', svm_mse,svm_jc, svm_f1s],
+      ['Navie Bayes',NB_mse,NB_jc,NB_f1s],
+      ['Decision Tree', DT_mse,DT_jc, DT_f1s], 
+      ['Random Forest', RF_mse,RF_jc, RF_f1s]]
+
+result=pd.DataFrame(data,columns=['Algorithm','MSE','Jaccard','F1-score'])
 print(result)
