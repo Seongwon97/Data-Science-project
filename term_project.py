@@ -12,16 +12,13 @@ from IPython.display import Image
 from sklearn.model_selection import cross_val_score
 from sklearn import metrics
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-
+from sklearn.utils import check_X_y
 
 #Read the file
 df = pd.read_csv('loan_final.csv')
-## 돌아가는데 너무 오래걸려서 50000개만 우선
-df=df.head(50000)
 print("\n--------------------------- [ Initial data ] ----------------------------")
 print(df)
 print("-------------------------------------------------------------------------\n")
-
 #Dirty data count output
 print("In Initial data, total dirty data count = ",sum(df.isna().sum()))
 
@@ -52,7 +49,7 @@ print("\nFill information using ffill. \nTotal dirty data count = ",sum(df2.isna
 
 #Change to Category Value
 grade_labelEncoder = LabelEncoder()
-grade_labelEncoder.fit(df2['grade'])
+grade_labelEncoder=grade_labelEncoder.fit(df2['grade'])
 df2['grade']=grade_labelEncoder.transform(df2['grade'])
 
 home_labelEncoder = LabelEncoder()
@@ -83,6 +80,8 @@ g=sns.heatmap(df2[top_corr].corr(), annot=True, cmap="RdYlGn")
 
 
 #Create df3 containing only grade-related data through heatmap results.
+## random sampling
+df2=df2.sample(50000)
 df3=df2.copy()
 df3.drop(['home_ownership', 'income_category', 'annual_inc', 'loan_amount', \
           'loan_condition', 'total_pymnt', 'installment'],axis=1,inplace=True)
@@ -92,11 +91,12 @@ df3.drop(['home_ownership', 'income_category', 'annual_inc', 'loan_amount', \
 #Data normalization using MinMax scaling
 X=df3[['term','interest_payments', 'interest_rate']]
 y=df3['grade']
+y=np.array(y.tolist())
 
 scaler = preprocessing.MinMaxScaler()
 scaled_df = scaler.fit_transform(X)
 scaled_df = pd.DataFrame(scaled_df, columns=['term', 'interest_payments','interest_rate'])
-scaled_df['grade']=df3['grade']
+scaled_df['grade']=y
 print("\n=========== [ Data Nomalization Results ] ===========")
 print(scaled_df)
 print('-----------------------------------------------------\n')
@@ -119,7 +119,7 @@ plt.show()
 
 ### Evaluation
 X=scaled_df[['term','interest_payments','interest_rate']]
-y=scaled_df['grade']
+y=df3['grade']
 target_names=['A','B','C','D','E','F','G']
 
 
@@ -300,12 +300,12 @@ def height_(ax, bar):
 
 
 models = ['KNN', 'SVM', 'Navie Bayes','Decision Tree','Random Forest']
-xticks = ['Accuracy','Jaccard','F1-score']
-data = {'KNN':[knn_acc, knn_jc, knn_f1s],
-        'SVM':[svm_acc,svm_jc, svm_f1s],
-        'Navie Bayes':[NB_acc,NB_jc,NB_f1s],
-        'Decision Tree':[DT_acc,DT_jc, DT_f1s],
-        'Random Forest':[RF_acc,RF_jc, RF_f1s]}
+xticks = ['Accuracy','MSE','Jaccard','F1-score']
+data = {'KNN':[knn_acc, knn_mse,knn_jc, knn_f1s],
+        'SVM':[svm_acc,svm_mse,svm_jc, svm_f1s],
+        'Navie Bayes':[NB_acc,NB_mse,NB_jc,NB_f1s],
+        'Decision Tree':[DT_acc,DT_mse,DT_jc, DT_f1s],
+        'Random Forest':[RF_acc,RF_mse,RF_jc, RF_f1s]}
 
 fig, ax = plt.subplots(figsize=(8,6))
 colors = ['salmon', 'orange', 'cadetblue', 'skyblue','yellow']
