@@ -266,7 +266,7 @@ data=[['KNN', knn_acc,knn_mse, knn_jc, knn_f1s],
       ['Decision Tree', DT_acc,DT_mse,DT_jc, DT_f1s], 
       ['Random Forest', RF_acc,RF_mse,RF_jc, RF_f1s]]
 
-result=pd.DataFrame(data,columns=['Algorithm','Accuarcy','MSE','Jaccard','F1-score'])
+result=pd.DataFrame(data,columns=['Algorithm','Accuracy','MSE','Jaccard','F1-score'])
 print(result)
 print('=====================================================\n')
 
