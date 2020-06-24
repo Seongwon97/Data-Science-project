@@ -81,13 +81,13 @@ g=sns.heatmap(df2[top_corr].corr(), annot=True, cmap="RdYlGn")
 
 #Create df3 containing only grade-related data through heatmap results.
 ## random sampling
-df2=df2.sample(50000)
+df2=df2.sample(200000)
 df3=df2.copy()
 df3.drop(['home_ownership', 'income_category', 'annual_inc', 'loan_amount', \
           'loan_condition', 'total_pymnt', 'installment'],axis=1,inplace=True)
 
 
-# target 제외하고 normalization 했습니다.
+
 #Data normalization using MinMax scaling
 X=df3[['term','interest_payments', 'interest_rate']]
 y=df3['grade']
@@ -212,19 +212,6 @@ from sklearn.tree import DecisionTreeClassifier
 classifier_DT = DecisionTreeClassifier(max_depth=5,criterion = 'entropy', random_state = 0)
 classifier_DT.fit(X_train, y_train)
 
-'''
-# graph가 안돌아가서 일단 주석 처리했어요.
-# 데이터 양이 많아서 주피터로 시각화 했어요 
-command_buf = io.StringIO()
-target_name = np.array(['A', 'B', 'C', 'D', 'E', 'F', 'G'])
-export_graphviz(model, out_file=command_buf, feature_names=['term', 'interest_payments', 'interest_rate'],
-                class_names=target_name)
-graph = pydot.graph_from_dot_data(command_buf.getvalue())[0]
-
-image = graph.create_png()
-Image(image)
-'''
-
 DT_pred=classifier_DT.predict(X_test)
 
 # calc value
@@ -275,7 +262,7 @@ plt.show()
 print('===================== [ RESULT ] ====================\n')
 data=[['KNN', knn_acc,knn_mse, knn_jc, knn_f1s],
       ['SVM', svm_acc,svm_mse,svm_jc, svm_f1s],
-      ['Navie Bayes',NB_acc,NB_mse,NB_jc,NB_f1s],
+      ['Naive Bayes',NB_acc,NB_mse,NB_jc,NB_f1s],
       ['Decision Tree', DT_acc,DT_mse,DT_jc, DT_f1s], 
       ['Random Forest', RF_acc,RF_mse,RF_jc, RF_f1s]]
 
@@ -299,11 +286,11 @@ def height_(ax, bar):
         ax.text(posx, posy, '%.2f' % height, rotation=30, ha='center', va='bottom')
 
 
-models = ['KNN', 'SVM', 'Navie Bayes','Decision Tree','Random Forest']
+models = ['KNN', 'SVM', 'Naive Bayes','Decision Tree','Random Forest']
 xticks = ['Accuracy','MSE','Jaccard','F1-score']
 data = {'KNN':[knn_acc, knn_mse,knn_jc, knn_f1s],
         'SVM':[svm_acc,svm_mse,svm_jc, svm_f1s],
-        'Navie Bayes':[NB_acc,NB_mse,NB_jc,NB_f1s],
+        'Naive Bayes':[NB_acc,NB_mse,NB_jc,NB_f1s],
         'Decision Tree':[DT_acc,DT_mse,DT_jc, DT_f1s],
         'Random Forest':[RF_acc,RF_mse,RF_jc, RF_f1s]}
 
@@ -328,4 +315,3 @@ ax.yaxis.grid(True, color='gray', linestyle='dashed', linewidth=0.5)
 
 plt.title('[ Predict Score for each classifier ]\n',fontsize=15)
 plt.show()
-    
