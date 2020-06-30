@@ -154,58 +154,6 @@ print('-----------------------------------------------------\n')
 plt.show()
 
 
-## SVM to the Train set ##
-print('====================== [ SVM ] ======================\n')
-from sklearn.svm import SVC
-classifier_SVM = SVC(kernel = 'rbf', random_state = 0)
-classifier_SVM.fit(X_train, y_train)
-
-svm_pred=classifier_SVM.predict(X_test)
-
-# calc value
-svm_acc=float(accuracy_score(y_test, svm_pred).round(3))
-svm_mse=float(round(metrics.mean_squared_error(y_test,svm_pred),3))
-svm_jc=float(metrics.jaccard_score(y_test, svm_pred,average='weighted').round(3))
-svm_f1s=float(metrics.f1_score(y_test, svm_pred,average='weighted',zero_division=1).round(3))
-
-# confusion matrix
-confusion = confusion_matrix(y_test,svm_pred)
-sns.heatmap(pd.DataFrame(confusion), annot=True, cmap='YlGnBu' ,fmt='g')
-plt.title('[ SVM Confusion matrix ]')
-plt.ylabel('Actual')
-plt.xlabel('Predicted')
-
-print(classification_report(y_test, svm_pred, target_names=target_names, digits=3,zero_division=1))
-print('-----------------------------------------------------\n')
-plt.show()
-
-
-## Naive Bayes to the Train set ##
-print('================== [ Navie Bayes ] ===================\n')
-from sklearn.naive_bayes import GaussianNB
-classifier_NB = GaussianNB()
-classifier_NB.fit(X_train, y_train)
-
-NB_pred=classifier_NB.predict(X_test)
-
-# calc value
-NB_acc=float(accuracy_score(y_test, NB_pred).round(3))
-NB_mse=float(round(metrics.mean_squared_error(y_test,NB_pred),3))
-NB_jc=float(metrics.jaccard_score(y_test, NB_pred,average='weighted').round(3))
-NB_f1s=float(metrics.f1_score(y_test, NB_pred,average='weighted',zero_division=1).round(3))
-
-# confusion matrix
-confusion = confusion_matrix(y_test,NB_pred)
-sns.heatmap(pd.DataFrame(confusion), annot=True, cmap='YlGnBu' ,fmt='g')
-plt.title('[  Naive Bayes Confusion matrix ]')
-plt.ylabel('Actual')
-plt.xlabel('Predicted')
-
-print(classification_report(y_test, NB_pred, target_names=target_names, digits=3,zero_division=1))
-print('-----------------------------------------------------\n')
-plt.show()
-
-
 ## Decision Tree to the Train set ##
 print('================= [ Decision Tree ] =================\n')
 from sklearn.tree import DecisionTreeClassifier
@@ -261,8 +209,6 @@ plt.show()
 ## show evaluation result
 print('===================== [ RESULT ] ====================\n')
 data=[['KNN', knn_acc,knn_mse, knn_jc, knn_f1s],
-      ['SVM', svm_acc,svm_mse,svm_jc, svm_f1s],
-      ['Naive Bayes',NB_acc,NB_mse,NB_jc,NB_f1s],
       ['Decision Tree', DT_acc,DT_mse,DT_jc, DT_f1s], 
       ['Random Forest', RF_acc,RF_mse,RF_jc, RF_f1s]]
 
@@ -286,11 +232,9 @@ def height_(ax, bar):
         ax.text(posx, posy, '%.2f' % height, rotation=30, ha='center', va='bottom')
 
 
-models = ['KNN', 'SVM', 'Naive Bayes','Decision Tree','Random Forest']
+models = ['KNN','Decision Tree','Random Forest']
 xticks = ['Accuracy','MSE','Jaccard','F1-score']
 data = {'KNN':[knn_acc, knn_mse,knn_jc, knn_f1s],
-        'SVM':[svm_acc,svm_mse,svm_jc, svm_f1s],
-        'Naive Bayes':[NB_acc,NB_mse,NB_jc,NB_f1s],
         'Decision Tree':[DT_acc,DT_mse,DT_jc, DT_f1s],
         'Random Forest':[RF_acc,RF_mse,RF_jc, RF_f1s]}
 
