@@ -10,7 +10,6 @@ import pydot
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn import metrics
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-from sklearn.utils import check_X_y
 
 #Read the file
 df = pd.read_csv('loan_final.csv')
