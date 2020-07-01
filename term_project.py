@@ -7,9 +7,7 @@ from sklearn import preprocessing
 import sklearn.linear_model as lm
 import io
 import pydot
-from sklearn.model_selection import train_test_split
-from IPython.display import Image
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn import metrics
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 from sklearn.utils import check_X_y
@@ -23,7 +21,7 @@ print("-------------------------------------------------------------------------
 print("In Initial data, total dirty data count = ",sum(df.isna().sum()))
 
 
-#preprocessing
+### preprocessing ###
 #Copy data to df2 and drop unnecessary data
 df2=df.copy()
 df2.drop(['id', 'year', 'issue_d', 'final_d', 'emp_length_int', 'application_type', 'purpose',\
@@ -117,24 +115,93 @@ sns.kdeplot(scaled_df['interest_rate'], ax=ax2)
 plt.show()
 
 
-### Evaluation
+### analysis ###
+
+# Grade distribution for term,interest_payments,interest_rate(loan_final)
+target_names=['A','B','C','D','E','F','G']
+t0,t1,t2,t3,t4,t5,t6=[],[],[],[],[],[],[]
+ip0,ip1,ip2,ip3,ip4,ip5,ip6=[],[],[],[],[],[],[]
+ir0,ir1,ir2,ir3,ir4,ir5,ir6=[],[],[],[],[],[],[]
+t=df['term']
+ip=df['interest_payments']
+ir=df['interest_rate']
+target=df['grade']
+
+bcolor=['firebrick','lightskyblue','lightcoral','yellow','lightgreen','mediumpurple','royalblue']
+
+for i in range(len(target)):
+    if target[i]=='A':
+        t0.append(t[i])
+        ip0.append(ip[i])
+        ir0.append(ir[i])
+    elif target[i]=='B':
+        t1.append(t[i])
+        ip1.append(ip[i])
+        ir1.append(ir[i])
+    elif target[i]=='C':
+        t2.append(t[i])
+        ip2.append(ip[i])
+        ir2.append(ir[i])
+    elif target[i]=='D':
+        t3.append(t[i])
+        ip3.append(ip[i])
+        ir3.append(ir[i])
+    elif target[i]=='E':
+        t4.append(t[i])
+        ip4.append(ip[i])
+        ir4.append(ir[i])
+    elif target[i]=='F':
+        t5.append(t[i])
+        ip5.append(ip[i])
+        ir5.append(ir[i])
+    elif target[i]=='G':
+        t6.append(t[i])
+        ip6.append(ip[i])
+        ir6.append(ir[i])
+
+fig,axs=plt.subplots(1,3)
+axs[0].set_title('[ term ]',fontsize=15)
+axs[0].hist((t0,t1,t2,t3,t4,t5,t6),bins=7,rwidth=1,color=bcolor)
+axs[1].set_title('[ interest_payments  ]',fontsize=15)
+axs[1].hist((ip0,ip1,ip2,ip3,ip4,ip5,ip6),bins=7,rwidth=1,color=bcolor)
+axs[2].set_title('[ interest_rate  ]',fontsize=15)
+axs[2].hist((ir0,ir1,ir2,ir3,ir4,ir5,ir6),bins=7,rwidth=1,color=bcolor)
+plt.legend(target_names)
+plt.show()
+
+
+## split dataset
 X=scaled_df[['term','interest_payments','interest_rate']]
 y=df3['grade']
-target_names=['A','B','C','D','E','F','G']
-
-
-# split dataset
-from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state = 0)
 
 
 ## KNN to the Train set ##
 print('====================== [ KNN ] ======================\n')
 from sklearn.neighbors import KNeighborsClassifier
-classifier_KNN = KNeighborsClassifier(n_neighbors = 5, metric = 'minkowski', p = 2)
-classifier_KNN.fit(X_train, y_train)
+k_acc=[]
+k=range(1,11)
 
-knn_pred = classifier_KNN.predict(X_test)
+# n_neighbors 1~10
+for i in k:
+    classifier_KNN=KNeighborsClassifier(n_neighbors=i)
+    classifier_KNN.fit(X_train,y_train)
+    acc=classifier_KNN.score(X_test,y_test)
+    k_acc.append(acc)
+    print('k={}, accuracy={}'.format(i,acc))
+
+plt.plot(k,k_acc)
+plt.xlabel('n_neighbor=k')
+plt.ylabel('accuracy')
+plt.title('[ KNN accuracy for number of k]')
+plt.show()
+
+# select best accuracy, and using best k
+max_k=k_acc.index(max(k_acc))
+print('** Best accuracy/k :',k_acc[max_k],'/',max_k+1)
+classifier_KNN=KNeighborsClassifier(n_neighbors=max_k+1)
+classifier_KNN.fit(X_train,y_train)
+knn_pred=classifier_KNN.predict(X_test)
 
 # calc value
 knn_acc=float(accuracy_score(y_test, knn_pred).round(3))
@@ -149,6 +216,8 @@ plt.title('[ KNN Confusion matrix ]')
 plt.ylabel('Actual')
 plt.xlabel('Predicted')
 
+# classification_report
+print('\n')
 print(classification_report(y_test, knn_pred, target_names=target_names, digits=3,zero_division=1))
 print('-----------------------------------------------------\n')
 plt.show()
@@ -175,6 +244,7 @@ plt.title('[ Decision Tree Confusion matrix ]')
 plt.ylabel('Actual')
 plt.xlabel('Predicted')
 
+# classification_report
 print(classification_report(y_test, DT_pred, target_names=target_names, digits=3,zero_division=1))
 print('-----------------------------------------------------\n')
 plt.show()
@@ -201,11 +271,14 @@ plt.title('[ Random Forest Confusion matrix ]')
 plt.ylabel('Actual')
 plt.xlabel('Predicted')
 
+# classification_report
 print(classification_report(y_test, RF_pred, target_names=target_names, digits=3,zero_division=1))
 print('-----------------------------------------------------\n')
 plt.show()
 
 
+
+### Evaluation ###
 ## show evaluation result
 print('===================== [ RESULT ] ====================\n')
 data=[['KNN', knn_acc,knn_mse, knn_jc, knn_f1s],
@@ -239,7 +312,7 @@ data = {'KNN':[knn_acc, knn_mse,knn_jc, knn_f1s],
         'Random Forest':[RF_acc,RF_mse,RF_jc, RF_f1s]}
 
 fig, ax = plt.subplots(figsize=(8,6))
-colors = ['salmon', 'orange', 'cadetblue', 'skyblue','yellow']
+colors = ['lightskyblue','lightcoral','yellow']
 width = 0.15
     
 for i, model in enumerate(models):
