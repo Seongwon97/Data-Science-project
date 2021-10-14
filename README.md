@@ -1,3 +1,7 @@
+# Data Science Project
+## Subject
+Predict the user's credit rating using several features
+
 ## Dataset
 https://www.kaggle.com/mrferozi/loan-data-for-dummy-bank
 
